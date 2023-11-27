@@ -1,1 +1,1 @@
-# Implementation of a transformer using PyTorch
+# Implementation of a transformer using MLX
