@@ -1,28 +1,26 @@
-import spacy
 from spacy.tokens import Token
-from data_loader import ds
+from data_loader import ds, nlp, build_batches
 import mlx.core as mx
 from transformer import Transformer
-
-
-def to_tensor(token: Token):
-    return mx.array(token.tensor)
+from functools import reduce
 
 
 def main():
-    # Load vocab and dataset:
-    nlp = spacy.load("fr_core_news_sm")
-    doc = ds["train"][0]["text"]
-    doc = nlp(doc)
-    d_model = len(doc.vector)
+    # Load the first ten articles
+    corpus = reduce(lambda store, text: store + text, ds["train"][:10]["text"])
 
-    # Parse sentences and turn them into tensors
-    vectorized_sentences = [to_tensor(s) for s in doc.sents if s.__len__() >= 3]
+    # initialize main params
+    vocab_dim = len(nlp.vocab)
+    embedding_dim = 96
+    batch_dim = 128
+
+    batches = build_batches(corpus, batch_dim)
+    model = Transformer(embedding_dim, batch_dim, vocab_dim)
 
     # Launch model
-    model = Transformer(d_model, 64)
-    output = model(vectorized_sentences[0])
-    print(output.shape, output)
+    for b in batches:
+        output = model(b)
+        print(output.shape, output)
 
     # for epoch in range(epochs):
     # for data, target in data_loader:
